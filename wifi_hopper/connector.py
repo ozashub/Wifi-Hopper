@@ -30,12 +30,11 @@ _PROFILE_TEMPLATE = """\
 </WLANProfile>
 """
 
-_CONNECT_TIMEOUT = 12   # seconds to wait for confirmed connection
-_CONNECT_POLL    = 0.8  # seconds between state polls
+_CONNECT_TIMEOUT = 12
+_CONNECT_POLL = 0.8
 
 
 def install_open_profile(ssid: str, interface: str) -> bool:
-    """Write a temp XML profile for an open network and load it into Windows."""
     xml = _PROFILE_TEMPLATE.format(ssid=_escape_xml(ssid))
 
     tmp_path = None
@@ -69,7 +68,6 @@ def install_open_profile(ssid: str, interface: str) -> bool:
 
 
 def connect_to_network(ssid: str, interface: str) -> bool:
-    """Issue netsh connect and poll until confirmed connected or timeout."""
     result = subprocess.run(
         ["netsh", "wlan", "connect", f"name={ssid}", f"ssid={ssid}", f"interface={interface}"],
         capture_output=True,
@@ -91,7 +89,6 @@ def connect_to_network(ssid: str, interface: str) -> bool:
 
 
 def disconnect(interface: str, ssid: str | None = None) -> None:
-    """Disconnect from current network and clean up profile if ssid is given."""
     subprocess.run(
         ["netsh", "wlan", "disconnect", f"interface={interface}"],
         capture_output=True,
@@ -102,7 +99,6 @@ def disconnect(interface: str, ssid: str | None = None) -> None:
 
 
 def delete_profile(ssid: str, interface: str) -> None:
-    """Remove the named profile from Windows to avoid leftover clutter."""
     try:
         subprocess.run(
             ["netsh", "wlan", "delete", "profile", f"name={ssid}", f"interface={interface}"],
