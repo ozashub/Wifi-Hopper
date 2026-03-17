@@ -140,11 +140,16 @@ class Hopper(threading.Thread):
             if ms is not None:
                 self._latency[network.ssid] = ms
             lat = f"{ms:.0f}ms" if ms is not None else "?"
+            msg = f"Connected to: {network.ssid}  ({lat})"
             log.info("connected  ssid=%r  signal=%d%%  ch=%d  latency=%s  (%.1fs)",
                      network.ssid, network.signal, network.channel, lat, elapsed)
-            toast("WiFi Hopper", f"Connected to: {network.ssid}  ({lat})")
+            print(msg)
+            toast("WiFi Hopper", msg)
         else:
             self._state = State.FAILED
             self._failed[network.ssid] = time.monotonic() + _FAILED_TTL
             delete_profile(network.ssid, self._cfg.interface)
+            msg = f"Failed to connect to: {network.ssid}"
             log.warning("connection to %r failed after %.1fs", network.ssid, elapsed)
+            print(msg)
+            toast("WiFi Hopper", msg)
