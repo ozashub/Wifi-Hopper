@@ -122,8 +122,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status")
 
     sp = sub.add_parser("start")
-    sp.add_argument("--interval", type=int, default=30)
-    sp.add_argument("--min-signal", type=int, default=50)
+    sp.add_argument("--interval", type=int, default=3)
+    sp.add_argument("--min-signal", type=int, default=0)
     sp.add_argument("--dwell", type=int, default=120)
     sp.add_argument("--blacklist", default="")
     sp.add_argument("--dry-run", action="store_true")

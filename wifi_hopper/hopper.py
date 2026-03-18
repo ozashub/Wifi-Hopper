@@ -45,14 +45,15 @@ class Hopper(threading.Thread):
         return self._current_ssid
 
     def run(self) -> None:
-        log.info("started  interval=%ds  min_signal=%d%%  dwell=%ds  dry_run=%s",
-                 self._cfg.poll_interval, self._cfg.min_signal,
-                 self._cfg.dwell_time, self._cfg.dry_run)
+        print(f"Hopper running  [poll={self._cfg.poll_interval}s  dwell={self._cfg.dwell_time}s"
+              f"  dry_run={self._cfg.dry_run}]")
+        print("Scanning for open networks...\n")
 
         while not self._stop_event.is_set():
             try:
                 self._tick()
             except Exception as exc:
+                print(f"Error: {exc}")
                 log.error("hopper loop error: %s", exc, exc_info=True)
             self._stop_event.wait(self._cfg.poll_interval)
 
@@ -65,7 +66,7 @@ class Hopper(threading.Thread):
         try:
             candidates = scan_open_networks(self._cfg.interface)
         except RuntimeError as exc:
-            log.warning("scan error: %s", exc)
+            print(f"Scan failed: {exc}")
             self._state = State.IDLE
             return
 
@@ -77,6 +78,8 @@ class Hopper(threading.Thread):
         candidates = [n for n in candidates if n.ssid not in self._failed]
 
         if not candidates:
+            if self._state != State.IDLE:
+                print("No open networks found, still looking...")
             self._state = State.IDLE
             return
 
@@ -108,6 +111,7 @@ class Hopper(threading.Thread):
                     self._state = State.CONNECTED
                     return
 
+        print(f"Found {len(candidates)} open network(s), trying {best.ssid} ({best.signal}% signal)...")
         self._connect(best)
 
     def _connect(self, network) -> None:
@@ -125,7 +129,7 @@ class Hopper(threading.Thread):
         t0 = time.monotonic()
 
         if not install_open_profile(network.ssid, self._cfg.interface):
-            log.warning("profile install failed for %r", network.ssid)
+            print(f"Couldn't set up profile for {network.ssid}, skipping")
             self._failed[network.ssid] = time.monotonic() + _FAILED_TTL
             return
 
