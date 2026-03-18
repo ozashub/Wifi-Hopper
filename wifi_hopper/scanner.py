@@ -140,18 +140,23 @@ def get_connected_ssid(interface: str) -> str | None:
 
     in_iface = False
     ssid = None
+    connected = False
 
     for line in result.stdout.splitlines():
         stripped = line.strip()
         if re.match(r"^Name\s*:", stripped):
             in_iface = stripped.split(":", 1)[1].strip().lower() == interface.lower()
+            ssid = None
+            connected = False
             continue
         if not in_iface:
             continue
+        if re.match(r"^State\s*:\s+connected", stripped, re.IGNORECASE):
+            connected = True
         m = re.match(r"^SSID\s*:\s+(.+)$", stripped)
         if m:
             ssid = m.group(1).strip()
-        if re.match(r"^State\s*:\s+connected", stripped, re.IGNORECASE):
-            return ssid
 
+    if connected and ssid:
+        return ssid
     return None

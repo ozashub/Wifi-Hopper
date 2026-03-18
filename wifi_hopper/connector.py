@@ -81,8 +81,8 @@ def connect_to_network(ssid: str, interface: str) -> bool:
     deadline = time.monotonic() + _CONNECT_TIMEOUT
     while time.monotonic() < deadline:
         time.sleep(_CONNECT_POLL)
-        connected_ssid = _query_connected_ssid(interface)
-        if connected_ssid and connected_ssid.lower() == ssid.lower():
+        got = _query_connected_ssid(interface)
+        if got and got.lower() == ssid.lower():
             return True
 
     return False
@@ -122,20 +122,25 @@ def _query_connected_ssid(interface: str) -> str | None:
 
     in_iface = False
     ssid = None
+    connected = False
     for line in result.stdout.splitlines():
         stripped = line.strip()
         if re.match(r"^Name\s*:", stripped):
             iface_name = stripped.split(":", 1)[1].strip()
             in_iface = iface_name.lower() == interface.lower()
+            ssid = None
+            connected = False
             continue
         if not in_iface:
             continue
+        if re.match(r"^State\s*:\s+connected", stripped, re.IGNORECASE):
+            connected = True
         m = re.match(r"^SSID\s*:\s+(.+)$", stripped)
         if m:
             ssid = m.group(1).strip()
-        if re.match(r"^State\s*:\s+connected", stripped, re.IGNORECASE):
-            return ssid
 
+    if connected and ssid:
+        return ssid
     return None
 
 
